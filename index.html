@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Structures & Algorithms Interactive Mindmap</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: auto;
+            color: #e0e0e0;
+        }
+
+        .mindmap-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-width: 1200px;
+            padding: 40px;
+        }
+
+        .mindmap {
+            position: relative;
+        }
+
+        .node {
+            position: relative;
+            margin: 10px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .node-content {
+            background: linear-gradient(135deg, #1e1e2f 0%, #2a2a3e 100%);
+            border-radius: 12px;
+            padding: 12px 18px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            border: 2px solid rgba(255,255,255,0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 600;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            color: #e0e0e0;
+        }
+
+        .node-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .node:hover .node-content::before {
+            opacity: 1;
+        }
+
+        .node:hover .node-content {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        .root {
+            font-size: 24px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border-radius: 20px;
+            padding: 20px 30px;
+            box-shadow: 0 8px 32px rgba(99, 102, 241, 0.3);
+        }
+
+        .category {
+            font-size: 18px;
+            background: linear-gradient(135deg, #ec4899, #f97316);
+            color: white;
+            min-width: 200px;
+        }
+
+        .subcategory {
+            font-size: 14px;
+            background: linear-gradient(135deg, #06b6d4, #3b82f6);
+            color: white;
+            min-width: 150px;
+        }
+
+        .item {
+            font-size: 12px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            min-width: 120px;
+            font-weight: 500;
+        }
+
+        .detail {
+            font-size: 11px;
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            color: white;
+            min-width: 100px;
+            font-weight: 400;
+            padding: 8px 12px;
+        }
+
+        .children {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            opacity: 1;
+            max-height: none;
+            transition: all 0.4s ease-in-out;
+            overflow: hidden;
+        }
+
+        .children.collapsed {
+            opacity: 0;
+            max-height: 0;
+            margin-top: 0;
+            gap: 0;
+        }
+
+        .expand-indicator {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            transition: transform 0.3s ease;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .expand-indicator.rotated {
+            transform: translateY(-50%) rotate(180deg);
+        }
+
+        .connector {
+            position: absolute;
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+            opacity: 0.4;
+        }
+
+        .vertical-connector {
+            width: 2px;
+            height: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            top: 100%;
+        }
+
+        .horizontal-connector {
+            height: 2px;
+            width: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            right: -30px;
+        }
+
+        .complexity {
+            font-size: 10px;
+            color: rgba(255,255,255,0.7);
+            font-style: italic;
+            margin-top: 4px;
+        }
+
+        .search-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .search-box {
+            padding: 10px 15px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 25px;
+            background: rgba(30, 30, 47, 0.9);
+            backdrop-filter: blur(10px);
+            outline: none;
+            font-size: 14px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            width: 200px;
+            transition: width 0.3s ease;
+            color: #e0e0e0;
+        }
+
+        .search-box::placeholder {
+            color: rgba(224, 224, 224, 0.6);
+        }
+
+        .search-box:focus {
+            width: 250px;
+            background: rgba(30, 30, 47, 1);
+            border-color: rgba(99, 102, 241, 0.5);
+        }
+
+        .highlight {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b) !important;
+            color: #000 !important;
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.5) !important;
+        }
+
+        .controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+        }
+
+        .control-btn {
+            padding: 8px 15px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            background: rgba(30, 30, 47, 0.9);
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            color: #e0e0e0;
+        }
+
+        .control-btn:hover {
+            background: rgba(30, 30, 47, 1);
+            transform: translateY(-2px);
+            border-color: rgba(99, 102, 241, 0.5);
+        }
+
+        @media (max-width: 768px) {
+            .mindmap-container {
+                min-width: 100%;
+                padding: 20px 10px;
+            }
+            
+            .search-box {
+                width: 150px;
+            }
+            
+            .search-box:focus {
+                width: 180px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="search-container">
+        <input type="text" class="search-box" placeholder="Search algorithms..." id="searchBox">
+    </div>
+
+    <div class="controls">
+        <button class="control-btn" onclick="expandAll()">Expand All</button>
+        <button class="control-btn" onclick="collapseAll()">Collapse All</button>
+        <button class="control-btn" onclick="resetView()">Reset</button>
+    </div>
+
+    <div class="mindmap-container">
+        <div class="mindmap">
+            <div class="node" data-level="0">
+                <div class="node-content root">
+                    Data Structures & Algorithms
+                    <div class="expand-indicator">−</div>
+                </div>
+                <div class="children">
+                    <!-- Data Structures Branch -->
+                    <div class="node" data-level="1">
+                        <div class="node-content category">
+                            Data Structures
+                            <div class="expand-indicator">−</div>
+                        </div>
+                        <div class="children">
+                            <!-- Linear Data Structures -->
+                            <div class="node" data-level="2">
+                                <div class="node-content subcategory">
+                                    Linear Structures
+                                    <div class="expand-indicator">−</div>
+                                </div>
+                                <div class="children">
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Arrays
+                                            <div class="expand-indicator">−</div>
+                                        </div>
+                                        <div class="children">
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Static Arrays
+                                                    <div class="complexity">Access: O(1)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Dynamic Arrays
+                                                    <div class="complexity">Resize: O(n)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Multi-dimensional
+                                                    <div class="complexity">Space: O(n×m)</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Linked Lists
+                                            <div class="expand-indicator">−</div>
+                                        </div>
+                                        <div class="children">
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Singly Linked
+                                                    <div class="complexity">Insert: O(1)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Doubly Linked
+                                                    <div class="complexity">Delete: O(1)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Circular
+                                                    <div class="complexity">Traverse: O(n)</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Stacks
+                                            <div class="expand-indicator">−</div>
+                                        </div>
+                                        <div class="children">
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    LIFO Principle
+                                                    <div class="complexity">Push/Pop: O(1)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Function Calls
+                                                    <div class="complexity">Recursion</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Expression Eval
+                                                    <div class="complexity">Parsing</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Queues
+                                            <div class="expand-indicator">−</div>
+                                        </div>
+                                        <div class="children">
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Simple Queue
+                                                    <div class="complexity">FIFO: O(1)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Priority Queue
+                                                    <div class="complexity">Extract: O(log n)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Circular Queue
+                                                    <div class="complexity">Space Efficient</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Deque
+                                                    <div class="complexity">Both Ends</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Non-Linear Data Structures -->
+                            <div class="node" data-level="2">
+                                <div class="node-content subcategory">
+                                    Non-Linear Structures
+                                    <div class="expand-indicator">−</div>
+                                </div>
+                                <div class="children">
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Trees
+                                            <div class="expand-indicator">−</div>
+                                        </div>
+                                        <div class="children">
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Binary Trees
+                                                    <div class="complexity">Height: O(log n)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    BST
+                                                    <div class="complexity">Search: O(log n)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    AVL Trees
+                                                    <div class="complexity">Balanced</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Red-Black
+                                                    <div class="complexity">Self-Balancing</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    B-Trees
+                                                    <div class="complexity">Multi-way</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Trie
+                                                    <div class="complexity">Prefix Tree</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Segment Tree
+                                                    <div class="complexity">Range Query</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Fenwick Tree
+                                                    <div class="complexity">Prefix Sum</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Heaps
+                                            <div class="expand-indicator">−</div>
+                                        </div>
+                                        <div class="children">
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Min Heap
+                                                    <div class="complexity">Extract: O(log n)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Max Heap
+                                                    <div class="complexity">Insert: O(log n)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Binomial Heap
+                                                    <div class="complexity">Merge: O(log n)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Fibonacci Heap
+                                                    <div class="complexity">Decrease: O(1)</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Graphs
+                                            <div class="expand-indicator">−</div>
+                                        </div>
+                                        <div class="children">
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Directed
+                                                    <div class="complexity">Edges have direction</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Undirected
+                                                    <div class="complexity">Bidirectional</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Weighted
+                                                    <div class="complexity">Edge weights</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Adjacency Matrix
+                                                    <div class="complexity">Space: O(V²)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Adjacency List
+                                                    <div class="complexity">Space: O(V+E)</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Hash-Based Structures -->
+                            <div class="node" data-level="2">
+                                <div class="node-content subcategory">
+                                    Hash-Based
+                                    <div class="expand-indicator">−</div>
+                                </div>
+                                <div class="children">
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Hash Tables
+                                            <div class="expand-indicator">−</div>
+                                        </div>
+                                        <div class="children">
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Chaining
+                                                    <div class="complexity">Collision Resolution</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Open Addressing
+                                                    <div class="complexity">Probing</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Operations
+                                                    <div class="complexity">Average: O(1)</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Bloom Filters
+                                            <div class="complexity">Probabilistic</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Advanced Structures -->
+                            <div class="node" data-level="2">
+                                <div class="node-content subcategory">
+                                    Advanced
+                                    <div class="expand-indicator">−</div>
+                                </div>
+                                <div class="children">
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Union-Find
+                                            <div class="complexity">O(α(n))</div>
+                                        </div>
+                                    </div>
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Suffix Trees
+                                            <div class="complexity">Linear construction</div>
+                                        </div>
+                                    </div>
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Skip Lists
+                                            <div class="complexity">Probabilistic</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Algorithms Branch -->
+                    <div class="node" data-level="1">
+                        <div class="node-content category">
+                            Algorithms
+                            <div class="expand-indicator">−</div>
+                        </div>
+                        <div class="children">
+                            <!-- Sorting Algorithms -->
+                            <div class="node" data-level="2">
+                                <div class="node-content subcategory">
+                                    Sorting
+                                    <div class="expand-indicator">−</div>
+                                </div>
+                                <div class="children">
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Comparison-Based
+                                            <div class="expand-indicator">−</div>
+                                        </div>
+                                        <div class="children">
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Bubble Sort
+                                                    <div class="complexity">O(n²)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Quick Sort
+                                                    <div class="complexity">O(n log n) avg</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Merge Sort
+                                                    <div class="complexity">O(n log n)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Heap Sort
+                                                    <div class="complexity">O(n log n)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Insertion Sort
+                                                    <div class="complexity">O(n²)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Selection Sort
+                                                    <div class="complexity">O(n²)</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Non-Comparison
+                                            <div class="expand-indicator">−</div>
+                                        </div>
+                                        <div class="children">
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Counting Sort
+                                                    <div class="complexity">O(n + k)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Radix Sort
+                                                    <div class="complexity">O(d × (n + k))</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Bucket Sort
+                                                    <div class="complexity">O(n + k) avg</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Searching Algorithms -->
+                            <div class="node" data-level="2">
+                                <div class="node-content subcategory">
+                                    Searching
+                                    <div class="expand-indicator">−</div>
+                                </div>
+                                <div class="children">
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Linear Search
+                                            <div class="complexity">O(n)</div>
+                                        </div>
+                                    </div>
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Binary Search
+                                            <div class="complexity">O(log n)</div>
+                                        </div>
+                                    </div>
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Jump Search
+                                            <div class="complexity">O(√n)</div>
+                                        </div>
+                                    </div>
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Interpolation Search
+                                            <div class="complexity">O(log log n)</div>
+                                        </div>
+                                    </div>
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Exponential Search
+                                            <div class="complexity">O(log n)</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Graph Algorithms -->
+                            <div class="node" data-level="2">
+                                <div class="node-content subcategory">
+                                    Graph Algorithms
+                                    <div class="expand-indicator">−</div>
+                                </div>
+                                <div class="children">
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Traversal
+                                            <div class="expand-indicator">−</div>
+                                        </div>
+                                        <div class="children">
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    BFS
+                                                    <div class="complexity">O(V + E)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    DFS
+                                                    <div class="complexity">O(V + E)</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Shortest Path
+                                            <div class="expand-indicator">−</div>
+                                        </div>
+                                        <div class="children">
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Dijkstra
+                                                    <div class="complexity">O(E log V)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Bellman-Ford
+                                                    <div class="complexity">O(VE)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Floyd-Warshall
+                                                    <div class="complexity">O(V³)</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            MST
+                                            <div class="expand-indicator">−</div>
+                                        </div>
+                                        <div class="children">
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Kruskal's
+                                                    <div class="complexity">O(E log E)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Prim's
+                                                    <div class="complexity">O(E log V)</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dynamic Programming -->
+                            <div class="node" data-level="2">
+                                <div class="node-content subcategory">
+                                    Dynamic Programming
+                                    <div class="expand-indicator">−</div>
+                                </div>
+                                <div class="children">
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Classic Problems
+                                            <div class="expand-indicator">−</div>
+                                        </div>
+                                        <div class="children">
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Fibonacci
+                                                    <div class="complexity">O(n)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    LCS
+                                                    <div class="complexity">O(mn)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    LIS
+                                                    <div class="complexity">O(n log n)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Knapsack
+                                                    <div class="complexity">O(nW)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Edit Distance
+                                                    <div class="complexity">O(mn)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Coin Change
+                                                    <div class="complexity">O(n × amount)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Matrix Chain
+                                                    <div class="complexity">O(n³)</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Greedy Algorithms -->
+                            <div class="node" data-level="2">
+                                <div class="node-content subcategory">
+                                    Greedy
+                                    <div class="expand-indicator">−</div>
+                                </div>
+                                <div class="children">
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Activity Selection
+                                            <div class="complexity">O(n log n)</div>
+                                        </div>
+                                    </div>
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Fractional Knapsack
+                                            <div class="complexity">O(n log n)</div>
+                                        </div>
+                                    </div>
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Huffman Coding
+                                            <div class="complexity">O(n log n)</div>
+                                        </div>
+                                    </div>
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Job Scheduling
+                                            <div class="complexity">Various</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Divide and Conquer -->
+                            <div class="node" data-level="2">
+                                <div class="node-content subcategory">
+                                    Divide & Conquer
+                                    <div class="expand-indicator">−</div>
+                                </div>
+                                <div class="children">
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Merge Sort
+                                            <div class="complexity">O(n log n)</div>
+                                        </div>
+                                    </div>
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Quick Sort
+                                            <div class="complexity">O(n log n) avg</div>
+                                        </div>
+                                    </div>
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Binary Search
+                                            <div class="complexity">O(log n)</div>
+                                        </div>
+                                    </div>
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Closest Pair
+                                            <div class="complexity">O(n log n)</div>
+                                        </div>
+                                    </div>
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Strassen's
+                                            <div class="complexity">O(n^2.807)</div>
+                                        </div>
+                                    </div>
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            FFT
+                                            <div class="complexity">O(n log n)</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Backtracking -->
+                            <div class="node" data-level="2">
+                                <div class="node-content subcategory">
+                                    Backtracking
+                                    <div class="expand-indicator">−</div>
+                                </div>
+                                <div class="children">
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            N-Queens
+                                            <div class="complexity">Exponential</div>
+                                        </div>
+                                    </div>
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Sudoku Solver
+                                            <div class="complexity">Exponential</div>
+                                        </div>
+                                    </div>
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Hamiltonian Path
+                                            <div class="complexity">O(n!)</div>
+                                        </div>
+                                    </div>
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Graph Coloring
+                                            <div class="complexity">Exponential</div>
+                                        </div>
+                                    </div>
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Subset Sum
+                                            <div class="complexity">O(2^n)</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- String Algorithms -->
+                            <div class="node" data-level="2">
+                                <div class="node-content subcategory">
+                                    String Algorithms
+                                    <div class="expand-indicator">−</div>
+                                </div>
+                                <div class="children">
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Pattern Matching
+                                            <div class="expand-indicator">−</div>
+                                        </div>
+                                        <div class="children">
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Naive
+                                                    <div class="complexity">O(nm)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    KMP
+                                                    <div class="complexity">O(n + m)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Boyer-Moore
+                                                    <div class="complexity">O(n + m)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Rabin-Karp
+                                                    <div class="complexity">O(n + m) avg</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Z Algorithm
+                                                    <div class="complexity">O(n + m)</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            String Processing
+                                            <div class="expand-indicator">−</div>
+                                        </div>
+                                        <div class="children">
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Manacher's
+                                                    <div class="complexity">O(n)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    String Hashing
+                                                    <div class="complexity">Rolling Hash</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Suffix Array
+                                                    <div class="complexity">O(n)</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Mathematical Algorithms -->
+                            <div class="node" data-level="2">
+                                <div class="node-content subcategory">
+                                    Mathematical
+                                    <div class="expand-indicator">−</div>
+                                </div>
+                                <div class="children">
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Number Theory
+                                            <div class="expand-indicator">−</div>
+                                        </div>
+                                        <div class="children">
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Euclidean GCD
+                                                    <div class="complexity">O(log min(a,b))</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Sieve of Eratosthenes
+                                                    <div class="complexity">O(n log log n)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Modular Exponentiation
+                                                    <div class="complexity">O(log exp)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Chinese Remainder
+                                                    <div class="complexity">System solving</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Matrix Operations
+                                            <div class="expand-indicator">−</div>
+                                        </div>
+                                        <div class="children">
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Matrix Multiplication
+                                                    <div class="complexity">O(n³)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Matrix Exponentiation
+                                                    <div class="complexity">O(n³ log k)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Gaussian Elimination
+                                                    <div class="complexity">O(n³)</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Advanced Algorithm Types -->
+                            <div class="node" data-level="2">
+                                <div class="node-content subcategory">
+                                    Advanced Types
+                                    <div class="expand-indicator">−</div>
+                                </div>
+                                <div class="children">
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Computational Geometry
+                                            <div class="expand-indicator">−</div>
+                                        </div>
+                                        <div class="children">
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Convex Hull
+                                                    <div class="complexity">O(n log n)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Line Intersection
+                                                    <div class="complexity">O(1)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Point in Polygon
+                                                    <div class="complexity">O(n)</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Randomized
+                                            <div class="expand-indicator">−</div>
+                                        </div>
+                                        <div class="children">
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Randomized QuickSort
+                                                    <div class="complexity">Expected O(n log n)</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Miller-Rabin Test
+                                                    <div class="complexity">Polynomial</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Monte Carlo
+                                                    <div class="complexity">Approximation</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Approximation
+                                            <div class="expand-indicator">−</div>
+                                        </div>
+                                        <div class="children">
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Vertex Cover
+                                                    <div class="complexity">2-approximation</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    TSP
+                                                    <div class="complexity">1.5-approximation</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Set Cover
+                                                    <div class="complexity">ln(n)-approximation</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="node" data-level="3">
+                                        <div class="node-content item">
+                                            Parallel Algorithms
+                                            <div class="expand-indicator">−</div>
+                                        </div>
+                                        <div class="children">
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Parallel Sorting
+                                                    <div class="complexity">O(log² n) time</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    MapReduce
+                                                    <div class="complexity">Distributed</div>
+                                                </div>
+                                            </div>
+                                            <div class="node" data-level="4">
+                                                <div class="node-content detail">
+                                                    Lock-free Structures
+                                                    <div class="complexity">Concurrent</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allNodes = [];
+        let searchResults = [];
+        let currentSearchIndex = 0;
+
+        // Initialize mindmap
+        document.addEventListener('DOMContentLoaded', function() {
+            allNodes = document.querySelectorAll('.node');
+            setupEventListeners();
+            setupSearch();
+        });
+
+        function setupEventListeners() {
+            allNodes.forEach(node => {
+                const nodeContent = node.querySelector('.node-content');
+                const children = node.querySelector('.children');
+                const expandIndicator = node.querySelector('.expand-indicator');
+
+                if (children && expandIndicator) {
+                    nodeContent.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        toggleNode(node);
+                    });
+                }
+            });
+        }
+
+        function toggleNode(node) {
+            const children = node.querySelector('.children');
+            const expandIndicator = node.querySelector('.expand-indicator');
+
+            if (children && expandIndicator) {
+                if (children.classList.contains('collapsed')) {
+                    children.classList.remove('collapsed');
+                    expandIndicator.textContent = '−';
+                    expandIndicator.classList.remove('rotated');
+                } else {
+                    children.classList.add('collapsed');
+                    expandIndicator.textContent = '+';
+                    expandIndicator.classList.add('rotated');
+                }
+            }
+        }
+
+        function expandAll() {
+            allNodes.forEach(node => {
+                const children = node.querySelector('.children');
+                const expandIndicator = node.querySelector('.expand-indicator');
+
+                if (children && expandIndicator) {
+                    children.classList.remove('collapsed');
+                    expandIndicator.textContent = '−';
+                    expandIndicator.classList.remove('rotated');
+                }
+            });
+        }
+
+        function collapseAll() {
+            allNodes.forEach(node => {
+                const children = node.querySelector('.children');
+                const expandIndicator = node.querySelector('.expand-indicator');
+                const level = parseInt(node.getAttribute('data-level'));
+
+                if (children && expandIndicator && level > 0) {
+                    children.classList.add('collapsed');
+                    expandIndicator.textContent = '+';
+                    expandIndicator.classList.add('rotated');
+                }
+            });
+        }
+
+        function resetView() {
+            // Clear search
+            document.getElementById('searchBox').value = '';
+            clearHighlights();
+            
+            // Reset to initial state - categories expanded, subcategories collapsed
+            allNodes.forEach(node => {
+                const children = node.querySelector('.children');
+                const expandIndicator = node.querySelector('.expand-indicator');
+                const level = parseInt(node.getAttribute('data-level'));
+
+                if (children && expandIndicator) {
+                    if (level <= 1) {
+                        children.classList.remove('collapsed');
+                        expandIndicator.textContent = '−';
+                        expandIndicator.classList.remove('rotated');
+                    } else {
+                        children.classList.add('collapsed');
+                        expandIndicator.textContent = '+';
+                        expandIndicator.classList.add('rotated');
+                    }
+                }
+            });
+        }
+
+        function setupSearch() {
+            const searchBox = document.getElementById('searchBox');
+            let searchTimeout;
+
+            searchBox.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    performSearch(this.value.toLowerCase());
+                }, 300);
+            });
+
+            searchBox.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    navigateSearchResults(e.shiftKey ? -1 : 1);
+                }
+            });
+        }
+
+        function performSearch(query) {
+            clearHighlights();
+            searchResults = [];
+            currentSearchIndex = 0;
+
+            if (query.trim() === '') {
+                return;
+            }
+
+            allNodes.forEach(node => {
+                const content = node.querySelector('.node-content');
+                const text = content.textContent.toLowerCase();
+
+                if (text.includes(query)) {
+                    searchResults.push(node);
+                    highlightNode(content);
+                    expandPathToNode(node);
+                }
+            });
+
+            if (searchResults.length > 0) {
+                scrollToNode(searchResults[0]);
+            }
+        }
+
+        function highlightNode(content) {
+            content.classList.add('highlight');
+        }
+
+        function clearHighlights() {
+            document.querySelectorAll('.highlight').forEach(el => {
+                el.classList.remove('highlight');
+            });
+        }
+
+        function expandPathToNode(node) {
+            let current = node.parentElement;
+            
+            while (current) {
+                if (current.classList.contains('children')) {
+                    current.classList.remove('collapsed');
+                    const parentNode = current.parentElement;
+                    const expandIndicator = parentNode.querySelector('.expand-indicator');
+                    if (expandIndicator) {
+                        expandIndicator.textContent = '−';
+                        expandIndicator.classList.remove('rotated');
+                    }
+                }
+                current = current.parentElement;
+            }
+        }
+
+        function navigateSearchResults(direction) {
+            if (searchResults.length === 0) return;
+
+            currentSearchIndex = (currentSearchIndex + direction + searchResults.length) % searchResults.length;
+            scrollToNode(searchResults[currentSearchIndex]);
+        }
+
+        function scrollToNode(node) {
+            node.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+                inline: 'center'
+            });
+
+            // Add temporary highlight
+            const content = node.querySelector('.node-content');
+            content.style.transform = 'scale(1.1)';
+            content.style.transition = 'transform 0.3s ease';
+
+            setTimeout(() => {
+                content.style.transform = '';
+            }, 600);
+        }
+
+        // Initialize with default view
+        setTimeout(() => {
+            resetView();
+        }, 100);
+    </script>
+</body>
+</html>
